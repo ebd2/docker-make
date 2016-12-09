@@ -55,11 +55,6 @@ EXTERNAL_DEPS := \
 #
 .PHONY: $(IMAGE_DIRS) $(EXTERNAL_DEPS)
 
-test:
-	echo $(DEPS)
-	echo $(FLAGS)
-	echo $(EXTERNAL_DEPS)
-
 # By default, build all of the images.
 all: $(IMAGES)
 
