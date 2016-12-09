@@ -31,10 +31,13 @@ include localconfig.mk
 #
 # Also, find on Mac doesn't support -exec {} +
 #
-IMAGE_DIRS=$(shell find $(ORGDIR) -type f -name Dockerfile -exec dirname {} \;)
+IMAGE_DIRS:=$(shell find $(ORGDIR) -type f -name Dockerfile -exec dirname {} \;)
+IMAGES:=$(subst $(ORGDIR),$(TAGROOT),$(IMAGE_DIRS))
 DOCKERFILES:=$(addsuffix /Dockerfile,$(IMAGE_DIRS))
-DEPS:=$(foreach dockerfile,$(DOCKERFILES),$(DEPDIR)/$(dockerfile:/Dockerfile=.d))
-FLAGS:=$(foreach dockerfile,$(DOCKERFILES),$(FLAGDIR)/$(dockerfile:/Dockerfile=.flags))
+
+IMAGE_DOCKERFILES:=$(addsuffix /Dockerfile,$(IMAGES))
+DEPS:=$(foreach dockerfile,$(IMAGE_DOCKERFILES),$(DEPDIR)/$(dockerfile:/Dockerfile=.d))
+FLAGS:=$(foreach dockerfile,$(IMAGE_DOCKERFILES),$(FLAGDIR)/$(dockerfile:/Dockerfile=.flags))
 
 #
 # Make a list of the Docker images we depend on, but aren't built from
@@ -52,8 +55,13 @@ EXTERNAL_DEPS := \
 #
 .PHONY: $(IMAGE_DIRS) $(EXTERNAL_DEPS)
 
+test:
+	echo $(DEPS)
+	echo $(FLAGS)
+	echo $(EXTERNAL_DEPS)
+
 # By default, build all of the images.
-all: $(IMAGE_DIRS)
+all: $(IMAGES)
 
 #
 # Release images to Dockerhub using docker-release
@@ -97,11 +105,11 @@ check-links:
 include $(DEPS)
 include $(FLAGS)
 
-$(DEPDIR)/%.d: %/Dockerfile $(DEPEND_SH)
+$(DEPDIR)/$(TAGROOT)/%.d: $(ORGDIR)/%/Dockerfile $(DEPEND_SH)
 	-mkdir -p $(dir $@)
 	$(SHELL) $(DEPEND_SH) $< $(IMAGE_DIRS) >$@
 
-$(FLAGDIR)/%.flags: %/Dockerfile $(FLAG_SH)
+$(FLAGDIR)/$(TAGROOT)/%.flags: $(ORGDIR)/%/Dockerfile $(FLAG_SH)
 	-mkdir -p $(dir $@)
 	$(SHELL) $(FLAG_SH) $< >$@
 
@@ -117,8 +125,9 @@ $(FLAGDIR)/%.flags: %/Dockerfile $(FLAG_SH)
 # invoke docker build for the image anyway and let Docker figure out if
 # anything has changed that requires a rebuild.
 #
-$(IMAGE_DIRS): %: %/Dockerfile check-links
-	cd $(dir $<) && time $(SHELL) -c "( tar -czh . | docker build $(DBFLAGS_$@) -t $@ --label $(LABEL) - )"
+$(IMAGES): $(TAGROOT)/%: $(ORGDIR)/%/Dockerfile check-links
+	cd $(dir $<) && time $(SHELL) -c \
+		"( tar -czh . | docker build $(DBFLAGS_$@) -t $@ --label $(LABEL) - )"
 
 #
 # Static pattern rule to pull docker images that are external dependencies of
