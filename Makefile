@@ -22,34 +22,7 @@ FIND_BROKEN_SYMLINKS_SH=find_broken_symlinks.sh
 DEPDIR=depends
 FLAGDIR=flags
 
-ORGDIR=teradatalabs
-
-#
-# This should be the only place you need to touch to update the version of Java
-# we install in the images. Every other variable should be derived directly or
-# indirectly from this one, and you should pass those variables to the
-# Dockerfiles using ARG and --build-arg.
-#
-JDK_URL := http://download.oracle.com/otn-pub/java/jdk/8u102-b14/jdk-8u102-linux-x64.rpm
-JDK_RPM := $(notdir $(JDK_URL))
-INSTALL_JDK_BUILD_ARGS := \
-	--build-arg JDK_URL=$(JDK_URL) \
-	--build-arg JDK_RPM=$(JDK_RPM)
-
-#
-# Generate path to installed JDK from the JDK RPM name.
-#
-# Assumes that the Java version number in the installed JDK path will remain in
-# the format 1.<major version>.0_<update number>
-#
-# jdk-8u92-linux-x64.rpm -> /usr/java/jdk1.8.0_92/
-#
-# Use only BREs in sed for cross-platform compatibility.
-#
-JDK_PATH := $(shell echo $(JDK_RPM) | \
-       	sed 's!jdk-\([0-9][0-9]*\)u\([0-9][0-9]*\).*!/usr/java/jdk1.\1.0_\2!')
-JDK_PATH_BUILD_ARGS := \
-	--build-arg JDK_PATH=$(JDK_PATH)
+include localconfig.mk
 
 #
 # In theory, we could just find all of the Dockerfiles and derive IMAGE_DIRS
