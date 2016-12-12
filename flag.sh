@@ -9,17 +9,14 @@ usage() {
 # Feel free to add that functionality if needed. For now, YAGNI.
 #
 find_args() {
-	local target_image=$(dirname "$target_dockerfile")
-	awk -v image="$target_image" '
-		BEGIN {
-			ARG_PATTERN = "^\\s*ARG";
-			print "DBFLAGS_" image " :=";
-		}
+	local target_dockerfile="$1"
+	local target_image="$2"
 
+	awk -v image="$target_image" '
 		$1 == "ARG" {
 			key = $2;
 			print "DBFLAGS_" image " += --build-arg " key "=$(" key ")";
-		}' "$1"
+		}' "$target_dockerfile"
 }
 
 if [ $# -lt 1 ]; then
@@ -28,5 +25,6 @@ if [ $# -lt 1 ]; then
 fi
 
 target_dockerfile=$1
+image_name=$2
 
 find_args "$target_dockerfile"

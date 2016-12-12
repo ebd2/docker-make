@@ -102,11 +102,11 @@ include $(FLAGS)
 
 $(DEPDIR)/$(TAGROOT)/%.d: $(ORGDIR)/%/Dockerfile $(DEPEND_SH)
 	-mkdir -p $(dir $@)
-	$(SHELL) $(DEPEND_SH) $< $(IMAGE_DIRS) >$@
+	$(SHELL) $(DEPEND_SH) $< $(TAGROOT)/$* $(IMAGE_DIRS) >$@
 
 $(FLAGDIR)/$(TAGROOT)/%.flags: $(ORGDIR)/%/Dockerfile $(FLAG_SH)
 	-mkdir -p $(dir $@)
-	$(SHELL) $(FLAG_SH) $< >$@
+	$(SHELL) $(FLAG_SH) $< $(TAGROOT)/$* >$@
 
 #
 # Finally, the static pattern rule that actually invokes docker build. If

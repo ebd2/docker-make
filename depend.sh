@@ -59,8 +59,8 @@ if [ $# -lt 2 ]; then
 fi
 
 target_dockerfile=$1
-target_image=$(dirname "$target_dockerfile")
-shift
+target_image=$2
+shift 2
 known_images="$*"
 
 parent_image=$(find_parent "$target_dockerfile")
