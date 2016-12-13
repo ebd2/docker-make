@@ -13,9 +13,14 @@ find_args() {
 	local target_image="$2"
 
 	awk -v image="$target_image" '
+		BEGIN {
+			flagsvar = "DBFLAGS_" image;
+			print "# " flagsvar;
+		}
+
 		$1 == "ARG" {
 			key = $2;
-			print "DBFLAGS_" image " += --build-arg " key "=$(" key ")";
+			print flagsvar " += --build-arg " key "=$(" key ")";
 		}' "$target_dockerfile"
 }
 
@@ -27,4 +32,4 @@ fi
 target_dockerfile=$1
 image_name=$2
 
-find_args "$target_dockerfile"
+find_args "$target_dockerfile" "$image_name"

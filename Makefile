@@ -22,7 +22,14 @@ FIND_BROKEN_SYMLINKS_SH=find_broken_symlinks.sh
 DEPDIR=depends
 FLAGDIR=flags
 
-include localconfig.mk
+#
+# Default target needs to be specified above including localconfig.mk,
+# otherwise, if localconfig.mk defines any rules, they override the
+# `all' target since they come before it.
+#
+_default: all
+
+include ../localconfig.mk
 
 #
 # In theory, we could just find all of the Dockerfiles and derive IMAGE_DIRS
@@ -53,7 +60,7 @@ EXTERNAL_DEPS := \
 # The image directories exist in the filesystem. Make them .PHONY so make
 # actually builds them.
 #
-.PHONY: $(IMAGE_DIRS) $(EXTERNAL_DEPS)
+.PHONY: $(IMAGES) $(EXTERNAL_DEPS)
 
 # By default, build all of the images.
 all: $(IMAGES)
@@ -63,11 +70,11 @@ all: $(IMAGES)
 # https://github.com/kokosing/docker-release
 #
 .PHONY: release snapshot
-release: $(IMAGE_DIRS)
+release: $(IMAGES)
 	[ "$(RELEASE_TYPE)" = "$@" ] || ( echo "$(VERSION) is not a $@ version"; exit 1 )
 	docker-release --no-build --release $(VERSION) --tag-once $^
 
-snapshot: $(IMAGE_DIRS)
+snapshot: $(IMAGES)
 	[ "$(RELEASE_TYPE)" = "$@" ] || ( echo "$(VERSION) is not a $@ version"; exit 1 )
 	docker-release --no-build --snapshot --tag-once $^
 
@@ -100,13 +107,14 @@ check-links:
 include $(DEPS)
 include $(FLAGS)
 
-$(DEPDIR)/$(TAGROOT)/%.d: $(ORGDIR)/%/Dockerfile $(DEPEND_SH)
+$(DEPDIR)/$(TAGROOT)/%.d: $(ORGDIR)/%/Dockerfile $(DEPEND_SH) Makefile
 	-mkdir -p $(dir $@)
 	$(SHELL) $(DEPEND_SH) $< $(TAGROOT)/$* $(IMAGE_DIRS) >$@
 
-$(FLAGDIR)/$(TAGROOT)/%.flags: $(ORGDIR)/%/Dockerfile $(FLAG_SH)
+$(FLAGDIR)/$(TAGROOT)/%.flags: $(ORGDIR)/%/Dockerfile $(FLAG_SH) Makefile
 	-mkdir -p $(dir $@)
 	$(SHELL) $(FLAG_SH) $< $(TAGROOT)/$* >$@
+	echo $(TAGROOT)/$*
 
 #
 # Finally, the static pattern rule that actually invokes docker build. If
